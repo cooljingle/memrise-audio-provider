@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.1
+// @version        0.0.2
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -41,13 +41,15 @@ $(document).ready(function() {
                 box_type.prototype.activate = (function() {
                     var cached_function = box_type.prototype.activate;
                     return function() {
-                        word = this.thing.columns[wordColumn].val;
                         var newCourseId = getCourseId(this);
                         if (courseId !== newCourseId) {
                             courseId = newCourseId;
                             editAudioOptions(this);
                         }
-                        injectAudioIfRequired(this);
+                        if(wordColumn > 0) {
+                            injectAudioIfRequired(this);
+                            word = this.thing.columns[wordColumn].val;
+                        }
                         var result = cached_function.apply(this, arguments);
                         return result;
                     };
@@ -84,7 +86,7 @@ $(document).ready(function() {
     function editAudioOptions(context) {
         $('#audio-provider-options').empty();
         var columns = context.pool.columns;
-        _.each(columns, function(v, k) {
+        _.each($.extend({0: {kind: "text", label: "No audio"}}, columns), function(v, k) {
             if (v.kind === "text") {
                 $('#audio-provider-options').append('<option value="' + k + '">' + v.label + '</option>');
             }
@@ -94,8 +96,10 @@ $(document).ready(function() {
         $('#audio-provider-options').change(function() {
             wordColumn = $(this).val();
             savedChoices[courseId] = wordColumn;
-            word = context.thing.columns[wordColumn].val;
             localStorage.setItem(localStorageIdentifier, JSON.stringify(savedChoices));
+            if(wordColumn > 0) {
+                word = context.thing.columns[wordColumn].val;
+            }
         });
     }
 
@@ -107,7 +111,7 @@ $(document).ready(function() {
     }
 
     function getCourseId(context) {
-        return context.course_id || MEMRISE.garden.session_params || MEMRISE.garden.session_data.thinguser_course_ids[context.thing_id + "-" + context.column_a + "-" + context.column_b];
+        return context.course_id || MEMRISE.garden.session_params.course_id || MEMRISE.garden.session_data.thinguser_course_ids[context.thing_id + "-" + context.column_a + "-" + context.column_b];
     }
     
     function injectAudioIfRequired(context) {
