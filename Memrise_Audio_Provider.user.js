@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.2
+// @version        0.0.3
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -41,14 +41,16 @@ $(document).ready(function() {
                 box_type.prototype.activate = (function() {
                     var cached_function = box_type.prototype.activate;
                     return function() {
-                        var newCourseId = getCourseId(this);
-                        if (courseId !== newCourseId) {
-                            courseId = newCourseId;
-                            editAudioOptions(this);
-                        }
-                        if(wordColumn > 0) {
-                            injectAudioIfRequired(this);
-                            word = this.thing.columns[wordColumn].val;
+                        if(this.template !== "end_of_session") {
+                            var newCourseId = getCourseId(this);
+                            if (courseId !== newCourseId) {
+                                courseId = newCourseId;
+                                editAudioOptions(this);
+                            }
+                            if(wordColumn > 0) {
+                                injectAudioIfRequired(this);
+                                word = this.thing.columns[wordColumn].val;
+                            }
                         }
                         var result = cached_function.apply(this, arguments);
                         return result;
