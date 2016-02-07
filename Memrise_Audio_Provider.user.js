@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.5
+// @version        0.0.6
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -129,6 +129,30 @@ $(document).ready(function() {
 
     function injectAudioIfRequired(context) {
         var column = getAudioColumn(context);
+        if(!column) {
+            var poolColumns = context.pool.columns,
+                thingColumns = context.thing.columns,
+                newColumnNo = Object.keys(poolColumns).length + 1;
+
+            poolColumns[newColumnNo] = {
+                always_show: false,
+                classes: [],
+                keyboard: "",
+                kind: "audio",
+                label: "Audio",
+                tapping_disabled: false,
+                typing_disabled: false,
+                typing_strict: false
+            };
+            thingColumns[newColumnNo] = {
+                accepted: [],
+                alts: [],
+                choices: [],
+                typing_corrects: {},
+                val: []
+            };
+            column = thingColumns[newColumnNo];
+        } 
         if (column.val.length === 0) {
             column.val.push({
                 url: "AUDIO_PROVIDER",
