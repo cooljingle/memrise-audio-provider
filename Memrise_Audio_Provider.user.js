@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.7
+// @version        0.0.8
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -316,7 +316,7 @@ $(document).ready(function() {
             if (languageCode) {
                 console.log("generating google tts audio for word: " + word);
                 var audioElement = document.createElement('audio'),
-                    audioLink = "http://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=t&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
+                    audioLink = "http://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=" + languageCode + "&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
                 audioElement.setAttribute('src', audioLink);
                 audioElement.play();
                 audioPlaying = true;
