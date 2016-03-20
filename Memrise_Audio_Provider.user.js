@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.10
+// @version        0.0.11
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -106,6 +106,10 @@ MEMRISE.garden.boxes.load = (function() {
     };
 }());
 
+function canSpeechSynthesize() {
+    return !!(speechSynthesisUtterance && speechSynthesisUtterance.lang);
+}
+
 function editAudioOptions(context) {
     $('#audio-provider-options').empty();
     var columns = context.pool.columns;
@@ -160,50 +164,56 @@ function getVoiceRssUrl() {
     }
 }
 
-function injectAudioIfRequired(context) {
-    var column = getAudioColumn(context);
-    if(!column) {
-        var poolColumns = context.pool.columns,
-            thingColumns = context.thing.columns,
-            newColumnNo = Object.keys(poolColumns).length + 1;
+function isValidLanguage() {
+    return canSpeechSynthesize() || !!(getAudioLink());
+}
 
-        poolColumns[newColumnNo] = {
-            always_show: false,
-            classes: [],
-            keyboard: "",
-            kind: "audio",
-            label: "Audio",
-            tapping_disabled: false,
-            typing_disabled: false,
-            typing_strict: false
-        };
-        thingColumns[newColumnNo] = {
-            accepted: [],
-            alts: [],
-            choices: [],
-            typing_corrects: {},
-            val: []
-        };
-        column = thingColumns[newColumnNo];
-    } 
-    if (column.val.length === 0) {
-        column.val.push({
-            url: "AUDIO_PROVIDER",
-            id: 1
-        });
+function injectAudioIfRequired(context) {
+    if(isValidLanguage()) {
+        $('#audio-provider-link').show();
+        var column = getAudioColumn(context);
+        if(!column) {
+            var poolColumns = context.pool.columns,
+                thingColumns = context.thing.columns,
+                newColumnNo = Object.keys(poolColumns).length + 1;
+
+            poolColumns[newColumnNo] = {
+                always_show: false,
+                classes: [],
+                keyboard: "",
+                kind: "audio",
+                label: "Audio",
+                tapping_disabled: false,
+                typing_disabled: false,
+                typing_strict: false
+            };
+            thingColumns[newColumnNo] = {
+                accepted: [],
+                alts: [],
+                choices: [],
+                typing_corrects: {},
+                val: []
+            };
+            column = thingColumns[newColumnNo];
+        } 
+        if (column.val.length === 0) {
+            column.val.push({
+                url: "AUDIO_PROVIDER",
+                id: 1
+            });
+        }
+    } else {
+        console.log("language '" + language + "' is invalid for audio generation");
+        $('#audio-provider-link').hide();
     }
 }
 
 function playGeneratedAudio() {
-    if (speechSynthesisUtterance && speechSynthesisUtterance.lang) {
+    if (canSpeechSynthesize()) {
         playSpeechSynthesisAudio();
     } else {
         var audioLink = getAudioLink();
-        if(audioLink) {
-            playLinkGeneratedAudio(audioLink);
-        } else {
-            console.log("failed to generate audio link for language code " + languageCode);
-        }
+        playLinkGeneratedAudio(audioLink);
     }
 }
 
