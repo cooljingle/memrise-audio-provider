@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api 
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.14
+// @version        0.0.15
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -172,7 +172,6 @@ function injectAudioIfRequired(context) {
     if(isValidLanguage()) {
         $('#audio-provider-link').show();
         var column = getAudioColumn(context);
-        column.kind = "audio";
         if(!column) {
             var poolColumns = context.pool.columns,
                 thingColumns = context.thing.columns,
@@ -196,7 +195,8 @@ function injectAudioIfRequired(context) {
                 val: []
             };
             column = thingColumns[newColumnNo];
-        } 
+        }
+        column.kind = "audio";
         if (column.val.length === 0) {
             column.val = [{
                 url: "AUDIO_PROVIDER",
