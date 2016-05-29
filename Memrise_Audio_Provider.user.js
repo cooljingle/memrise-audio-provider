@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name           Memrise Audio Provider
 // @namespace      https://github.com/cooljingle
-// @description    Provides generated audio from google's TTS api 
+// @description    Provides generated audio from google's TTS api
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.15
+// @version        0.0.16
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -139,7 +139,11 @@ function getAudioColumn(context) {
     var audioColumnNumber = _.findKey(context.pool.columns, function(c) {
         return c.kind === "audio";
     });
-    return context.thing.columns[audioColumnNumber] || _.find(context.thing.columns, function(c) {return c.val[0].url === "AUDIO_PROVIDER";} );
+     //original object is referenced elsewhere so we have to put a copy in to stop changes being propagated
+    if(context.thing.columns[audioColumnNumber]) {
+        context.thing.columns[audioColumnNumber] = $.extend({}, context.thing.columns[audioColumnNumber]);
+    }
+    return context.thing.columns[audioColumnNumber] || _.find(context.thing.columns, function(c) {return c && c.val && c.val[0].url === "AUDIO_PROVIDER";} );
 }
 
 function getAudioLink() {
