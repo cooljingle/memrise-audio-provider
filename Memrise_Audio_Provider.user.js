@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.16
+// @version        0.0.17
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -107,7 +107,7 @@ MEMRISE.garden.boxes.load = (function() {
 }());
 
 function canSpeechSynthesize() {
-    return !!(speechSynthesisUtterance && speechSynthesisUtterance.lang);
+    return !!(speechSynthesisUtterance && speechSynthesisUtterance.lang && speechSynthesisUtterance.voice);
 }
 
 function editAudioOptions(context) {
@@ -250,6 +250,16 @@ function playSpeechSynthesisAudio() {
     audioPlaying = true;
     speechSynthesisUtterance.onend = function(event) {
         audioPlaying = false;
+       //firefox utterances don't play more than once 
+        if(navigator.userAgent.search("Firefox") > -1) {
+            var lang = speechSynthesisUtterance.lang,
+                voice = speechSynthesisUtterance.voice,
+                test = speechSynthesisUtterance.text;
+            speechSynthesisUtterance = new window.SpeechSynthesisUtterance();
+            speechSynthesisUtterance.lang = lang;
+            speechSynthesisUtterance.voice = voice;
+            speechSynthesisUtterance.text = text;
+        }
     };
 }
 
