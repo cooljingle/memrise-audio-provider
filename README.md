@@ -26,8 +26,10 @@ The script has three different methods to generate audio:
 * [Google TTS API](http://techcrunch.com/2009/12/14/the-unofficial-google-text-to-speech-api/)
 * [Voice RSS](http://www.voicerss.org/)
 
-Speech Synthesis is available on chrome on a select number of languages.
+Speech Synthesis is available on chrome on a select number of languages. For firefox it currently works (firefox 44+) for English and Mandarin Chinese, but also requires you to navigate to **about:config** and set **media.webspeech.synth.enabled** to **true**.
+
 Failing this, the script will try generating audio via google's tts api. This has support for a large number of languages, but the audio generation may drop out temporarily as google has imposed limits to prevent abuse of the system.
+
 Voice RRS is the last port of call; to use it you will have to go to http://www.voicerss.org/ and register an account. Once this is done you will receive an API key which you will need to input into the audio options; it provides 350 free requests per day.
 
 ### Issues
