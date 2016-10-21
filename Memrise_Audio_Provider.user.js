@@ -4,7 +4,7 @@
 // @description    Provides generated audio from google's TTS api
 // @match          http://www.memrise.com/course/*/garden/*
 // @match          http://www.memrise.com/garden/review/*
-// @version        0.0.17
+// @version        0.0.18
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -250,7 +250,7 @@ function playSpeechSynthesisAudio() {
     audioPlaying = true;
     speechSynthesisUtterance.onend = function(event) {
         audioPlaying = false;
-       //firefox utterances don't play more than once 
+       //firefox utterances don't play more than once
         if(navigator.userAgent.search("Firefox") > -1) {
             var lang = speechSynthesisUtterance.lang,
                 voice = speechSynthesisUtterance.voice,
@@ -277,7 +277,7 @@ var speechSynthesisLanguageCodes = {
     "Polish": "pl-PL",
     "Portuguese (Brazil)": "pt-BR",
     "Russian": "ru-RU",
-    "Mandarin Chinese (Simplified)": "zh-CN",
+    "Chinese (Simplified)": "zh-CN",
     "Cantonese": "zh-HK",
     "Chinese (Traditional)": "zh-TW"
 };
@@ -298,7 +298,7 @@ var ttsLanguageCodes = {
     "Bulgarian": "bg",
     "Cambodian": "km",
     "Catalan": "ca",
-    "Mandarin Chinese (Simplified)": "zh-CN",
+    "Chinese (Simplified)": "zh-CN",
     "Chinese (Traditional)": "zh-TW",
     "Corsican": "co",
     "Croatian": "hr",
@@ -406,7 +406,7 @@ var ttsLanguageCodes = {
 
 var voiceRssLanguageCodes = {
     "Catalan": "ca-es",
-    "Mandarin Chinese (Simplified)": "zh-cn",
+    "Chinese (Simplified)": "zh-cn",
     "Chinese (Traditional)": "zh-tw",
     "Danish": "da-dk",
     "Dutch": "nl-nl",
@@ -424,4 +424,4 @@ var voiceRssLanguageCodes = {
     "Russian": "ru-ru",
     "Spanish": "es-es",
     "Swedish": "sv-se"
-}
+};
