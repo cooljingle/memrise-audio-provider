@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name           Memrise Audio Provider
 // @namespace      https://github.com/cooljingle
-// @description    Provides generated audio from google's TTS api
-// @match          http://www.memrise.com/course/*/garden/*
-// @match          http://www.memrise.com/garden/review/*
-// @version        0.0.19
+// @description    Provides audio for any items you are learning which have none.
+// @match          https://www.memrise.com/course/*/garden/*
+// @match          https://www.memrise.com/garden/review/*
+// @version        0.0.20
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -45,7 +45,7 @@ $(document).ready(function(){
     //required to get google's tts working
     var meta = document.createElement('meta');
     meta.name = "referrer";
-    meta.content = "no-referrer";
+    meta.content = "none";
     document.getElementsByTagName('head')[0].appendChild(meta);
 
     MEMRISE.garden.boxes.load = (function() {
