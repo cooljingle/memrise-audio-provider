@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.0.20
+// @version        0.0.21
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -45,7 +45,7 @@ $(document).ready(function(){
     //required to get google's tts working
     var meta = document.createElement('meta');
     meta.name = "referrer";
-    meta.content = "none";
+    meta.content = "never";
     document.getElementsByTagName('head')[0].appendChild(meta);
 
     MEMRISE.garden.boxes.load = (function() {
@@ -158,14 +158,14 @@ $(document).ready(function(){
     function getTtsUrl() {
         var languageCode = ttsLanguageCodes[language];
         if (languageCode && !ttsFailed) {
-            return "http://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=tw-ob&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
+            return "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=tw-ob&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
         }
     }
 
     function getVoiceRssUrl() {
         var languageCode = voiceRssLanguageCodes[language];
         if (languageCode && voiceRssKey) {
-            return 'http://api.voicerss.org/?key=' + voiceRssKey + '&src=' + encodeURIComponent(word) + '&hl=' + languageCode + '&f=48khz_16bit_stereo';
+            return 'https://api.voicerss.org/?key=' + voiceRssKey + '&src=' + encodeURIComponent(word) + '&hl=' + languageCode + '&f=48khz_16bit_stereo';
         }
     }
 
