@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.0.22
+// @version        0.0.23
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -28,6 +28,7 @@ $(document).ready(function(){
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
+        referrerSet = false,
         ttsFailed = false,
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
         word,
@@ -224,6 +225,7 @@ $(document).ready(function(){
     }
 
     function playLinkGeneratedAudio(audioLink) {
+        referrerSet = true;
         document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
         var audioElement = document.createElement('audio');
         audioElement.setAttribute('src', audioLink);
@@ -243,8 +245,19 @@ $(document).ready(function(){
         $(audioElement).on('ended', function() {
             audioPlaying = false;
             document.getElementsByName("referrer")[0].setAttribute("content", "origin");
+            referrerSet = false;
         });
     }
+
+    //delay request if requesting audio via tts
+    $(document).ajaxSend(function(e, xhr, settings){
+       if(referrerSet){
+            setTimeout(function() {
+                $.ajax(settings);
+           }, 500);
+           xhr.abort();
+        }
+    });
 
     function playSpeechSynthesisAudio() {
         console.log("generating speechSynthesis audio for word: " + word);
