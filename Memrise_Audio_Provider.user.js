@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.0.21
+// @version        0.0.22
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -45,7 +45,7 @@ $(document).ready(function(){
     //required to get google's tts working
     var meta = document.createElement('meta');
     meta.name = "referrer";
-    meta.content = "never";
+    meta.content = "origin";
     document.getElementsByTagName('head')[0].appendChild(meta);
 
     MEMRISE.garden.boxes.load = (function() {
@@ -224,6 +224,7 @@ $(document).ready(function(){
     }
 
     function playLinkGeneratedAudio(audioLink) {
+        document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
         var audioElement = document.createElement('audio');
         audioElement.setAttribute('src', audioLink);
         audioElement.addEventListener('error', function(e) {
@@ -241,6 +242,7 @@ $(document).ready(function(){
         audioPlaying = true;
         $(audioElement).on('ended', function() {
             audioPlaying = false;
+            document.getElementsByName("referrer")[0].setAttribute("content", "origin");
         });
     }
 
