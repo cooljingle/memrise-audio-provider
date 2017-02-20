@@ -34,4 +34,4 @@ Voice RRS is the last port of call; to use it you will have to go to http://www.
 
 ### Issues
 
-If you come across any issues or have a suggestion you can leave your feedback in the forum thread: http://www.memrise.com/thread/1745286/
+If you come across any issues or have a suggestion you can leave your feedback in the forum thread: https://community.memrise.com/t/userscript-memrise-audio-provider/10133
