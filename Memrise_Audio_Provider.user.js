@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.0.24
+// @version        0.0.25
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -28,7 +28,8 @@ $(document).ready(function(){
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
-        referrerSet = false,
+        noReferrer = false,
+        ttsBreaking = false,
         ttsFailed = false,
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
         word,
@@ -210,7 +211,7 @@ $(document).ready(function(){
                 }];
             }
         } else {
-            console.log("language '" + language + "' is invalid for audio generation");
+            console.log("could not find a way to generate audio for language" + language);
             $('#audio-provider-link').hide();
         }
     }
@@ -225,39 +226,40 @@ $(document).ready(function(){
     }
 
     function playLinkGeneratedAudio(audioLink) {
-        referrerSet = true;
-        document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
         var audioElement = document.createElement('audio');
         audioElement.setAttribute('src', audioLink);
         audioElement.addEventListener('error', function(e) {
-            ttsFailed = true;
-            if(voiceRssKey) {
-                var alternateSrc = getVoiceRssUrl();
-                if(e.target.currentSrc !== alternateSrc) {
-                    console.log("tts failed, switching to voiceRss");
-                    audioElement.setAttribute('src', alternateSrc);
-                    audioElement.play();
+            if(ttsBreaking) {
+                ttsBreaking = false;
+                console.log("retrying google tts");
+                playLinkGeneratedAudio(audioLink);
+            } else {
+                ttsFailed = true;
+                if(voiceRssKey) {
+                    var alternateSrc = getVoiceRssUrl();
+                    if(e.target.currentSrc !== alternateSrc) {
+                        console.log("tts failed, switching to voiceRss");
+                        audioElement.setAttribute('src', alternateSrc);
+                        audioElement.play();
+                    }
                 }
             }
         });
+        setNoReferrer();
         audioElement.play();
         audioPlaying = true;
         $(audioElement).on('ended', function() {
             audioPlaying = false;
-            document.getElementsByName("referrer")[0].setAttribute("content", "origin");
-            referrerSet = false;
+            setReferrerOrigin();
         });
     }
 
-    //delay request if requesting audio via tts
-    $(document).ajaxSend(function(e, xhr, settings){
-       if(referrerSet){
-            setTimeout(function() {
-                $.ajax(settings);
-           }, 500);
-           xhr.abort();
-        } else if (MEMRISE.garden.boxes.current() && MEMRISE.garden.boxes.current().template === "end_of_session") {
-            MEMRISE.garden.set_next_button();
+    $(document).ajaxSend(function(e, xhr, settings) {
+        //google tts calls require a no referrer header, but this breaks other calls
+        //if a request comes in during a tts call we'll have to reset the referrer, breaking the tts call (which we can then retry)
+        if(noReferrer){
+            setReferrerOrigin();
+            ttsBreaking = true;
         }
     });
 
@@ -279,6 +281,16 @@ $(document).ready(function(){
                 speechSynthesisUtterance.text = text;
             }
         };
+    }
+
+    function setNoReferrer(){
+        noReferrer = true;
+        document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
+    }
+
+    function setReferrerOrigin(){
+        noReferrer = false;
+        document.getElementsByName("referrer")[0].setAttribute("content", "origin");
     }
 
     var speechSynthesisLanguageCodes = {
