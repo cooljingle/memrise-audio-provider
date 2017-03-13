@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.0.25
+// @version        0.0.26
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -182,7 +182,7 @@ $(document).ready(function(){
             if(!column) {
                 var poolColumns = context.pool.columns,
                     thingColumns = context.thing.columns,
-                    newColumnNo = Object.keys(poolColumns).length + 1;
+                    newColumnNo = parseInt(_.max(Object.keys(context.pool.columns))) + 1;
 
                 poolColumns[newColumnNo] = {
                     always_show: false,
