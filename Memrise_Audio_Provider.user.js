@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.0
+// @version        0.1.1
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -29,6 +29,7 @@ $(document).ready(function () {
         localStorageIdentifier = "memrise-audio-provider",
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
+        speechSynthesisPlaying,
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
         wordColumn = 1;
@@ -242,21 +243,25 @@ $(document).ready(function () {
     }
 
     function playSpeechSynthesisAudio(word) {
-        log("generating speechSynthesis audio for word: " + word);
-        speechSynthesisUtterance.text = word;
-        window.speechSynthesis.speak(speechSynthesisUtterance);
-        speechSynthesisUtterance.onend = function (event) {
-            //firefox utterances don't play more than once
-            if (navigator.userAgent.search("Firefox") > -1) {
-                var lang = speechSynthesisUtterance.lang,
-                    voice = speechSynthesisUtterance.voice,
-                    test = speechSynthesisUtterance.text;
-                speechSynthesisUtterance = new window.SpeechSynthesisUtterance();
-                speechSynthesisUtterance.lang = lang;
-                speechSynthesisUtterance.voice = voice;
-                speechSynthesisUtterance.text = text;
-            }
-        };
+        if(!speechSynthesisPlaying){
+            log("generating speechSynthesis audio for word: " + word);
+            speechSynthesisUtterance.text = word;
+            window.speechSynthesis.speak(speechSynthesisUtterance);
+            speechSynthesisPlaying = true;
+            speechSynthesisUtterance.onend = function (event) {
+                speechSynthesisPlaying = false;
+                //firefox utterances don't play more than once
+                if (navigator.userAgent.search("Firefox") > -1) {
+                    var lang = speechSynthesisUtterance.lang,
+                        voice = speechSynthesisUtterance.voice,
+                        test = speechSynthesisUtterance.text;
+                    speechSynthesisUtterance = new window.SpeechSynthesisUtterance();
+                    speechSynthesisUtterance.lang = lang;
+                    speechSynthesisUtterance.voice = voice;
+                    speechSynthesisUtterance.text = text;
+                }
+            };
+        }
     }
 
     function playGoogleTtsAudio(word) {
@@ -353,7 +358,8 @@ $(document).ready(function () {
     var speechSynthesisLanguageCodes = {
         "German": "de-DE",
         "English": "en-GB",
-        "Spanish": "es-ES",
+        "Spanish (Mexico)": "es-ES",
+        "Spanish (Spain)": "es-ES",
         "French": "fr-FR",
         "Hindi": "hi-IN",
         "Indonesian": "id-ID",
@@ -465,7 +471,8 @@ $(document).ready(function () {
         "Slovak": "sk",
         "Slovenian": "sl",
         "Somali": "so",
-        "Spanish": "es",
+        "Spanish (Mexico)": "es",
+        "Spanish (Spain)": "es",
         "Sundanese": "su",
         "Swahili": "sw",
         "Swedish": "sv",
@@ -509,7 +516,8 @@ $(document).ready(function () {
         "Portuguese (Brazil)": "pt-br",
         "Portuguese (Portugal)": "pt-pt",
         "Russian": "ru-ru",
-        "Spanish": "es-es",
+        "Spanish (Mexico)": "es-es",
+        "Spanish (Spain)": "es-es",
         "Swedish": "sv-se"
     };
 });
