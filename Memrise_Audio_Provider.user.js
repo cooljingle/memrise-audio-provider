@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.1
+// @version        0.1.2
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -181,7 +181,7 @@ $(document).ready(function () {
     }
 
     function getCourseId(context) {
-        return context.course_id || MEMRISE.garden.session_params.course_id || MEMRISE.garden.session_data.thinguser_course_ids[context.thing_id + "-" + context.column_a + "-" + context.column_b];
+        return context.course_id || MEMRISE.garden.session_params.course_id || MEMRISE.garden.session_data.things_to_courses[context.thing_id];
     }
 
     function injectAudioIfRequired(context) {
