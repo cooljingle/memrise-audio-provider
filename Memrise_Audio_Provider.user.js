@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.2
+// @version        0.1.3
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -26,13 +26,13 @@ $(document).ready(function () {
             "   <input id='audio-provider-voicerss' type='text' placeholder='enter Voice RSS key'>",
             "</div>"
         ].join("\n")),
-        localStorageIdentifier = "memrise-audio-provider",
+        localStorageIdentifier = "memrise-audio-provider-storage",
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisPlaying,
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
-        wordColumn = 1;
+        wordColumn = "item";
 
     var canSpeechSynthesize = false,
         canGoogleTts = true,
@@ -77,9 +77,9 @@ $(document).ready(function () {
                                 courseId = newCourseId;
                                 editAudioOptions(this);
                             }
-                            if (wordColumn > 0) {
+                            if (wordColumn !== "none") {
                                 var isInjected = injectAudioIfRequired(this);
-                                currentWord = this.thing.columns[wordColumn].val;
+                                currentWord = this.learnable[wordColumn].value;
                                 if (isInjected && !canSpeechSynthesize && canGoogleTts) {
                                     preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
                                 }
@@ -120,39 +120,36 @@ $(document).ready(function () {
 
     function editAudioOptions(context) {
         $('#audio-provider-options').empty();
-        var columns = context.pool.columns;
-        _.each($.extend({
-            0: {
+        _.each({
+            none: {
                 kind: "text",
                 label: "No audio"
-            }
-        }, columns), function (v, k) {
+            },
+            item: context.learnable.item,
+            definition: context.learnable.definition
+        }, function (v, k) {
             if (v.kind === "text") {
                 $('#audio-provider-options').append('<option value="' + k + '">' + v.label + '</option>');
             }
         });
-        wordColumn = savedChoices[courseId] || 1;
-        $('#audio-provider-options').val(savedChoices[courseId] || 1);
+        wordColumn = savedChoices[courseId] || "item";
+        $('#audio-provider-options').val(savedChoices[courseId] || "item");
         $('#audio-provider-options').change(function () {
             wordColumn = $(this).val();
             savedChoices[courseId] = wordColumn;
             localStorage.setItem(localStorageIdentifier, JSON.stringify(savedChoices));
-            if (wordColumn > 0) {
-                currentWord = context.thing.columns[wordColumn].val;
+            if (wordColumn !== "none") {
+                currentWord = context.learnable[wordColumn].value;
             }
         });
     }
 
     function getAudioColumn(context) {
-        var audioColumnNumber = _.findKey(context.pool.columns, function (c) {
+        var audioColumnNumber = _.findKey(context.learnable.columns, function (c) {
             return c.kind === "audio";
         });
-        //original object is referenced elsewhere so we have to put a copy in to stop changes being propagated
-        if (context.thing.columns[audioColumnNumber]) {
-            context.thing.columns[audioColumnNumber] = $.extend({}, context.thing.columns[audioColumnNumber]);
-        }
-        return context.thing.columns[audioColumnNumber] || _.find(context.thing.columns, function (c) {
-            return c && c.val && c.val[0].url === "AUDIO_PROVIDER";
+        return context.learnable.columns[audioColumnNumber] || _.find(context.learnable.columns, function (c) {
+            return c && c.value && c.value[0] === "AUDIO_PROVIDER";
         });
     }
 
@@ -189,11 +186,9 @@ $(document).ready(function () {
             $('#audio-provider-link').show();
             var column = getAudioColumn(context);
             if (!column) {
-                var poolColumns = context.pool.columns,
-                    thingColumns = context.thing.columns,
-                    newColumnNo = parseInt(_.max(Object.keys(context.pool.columns))) + 1;
-
-                poolColumns[newColumnNo] = {
+                var columns = context.learnable.columns;
+                column = {
+                    alternatives: [],
                     always_show: false,
                     classes: [],
                     keyboard: "",
@@ -203,21 +198,12 @@ $(document).ready(function () {
                     typing_disabled: false,
                     typing_strict: false
                 };
-                thingColumns[newColumnNo] = {
-                    accepted: [],
-                    alts: [],
-                    choices: [],
-                    typing_corrects: {},
-                    val: []
-                };
-                column = thingColumns[newColumnNo];
+                columns.push(column);
             }
             column.kind = "audio";
-            if (column.val.length === 0) {
-                column.val = [{
-                    url: "AUDIO_PROVIDER",
-                    id: 1
-                }];
+            if (!column.value || column.value.length === 0) {
+                column.value = ["AUDIO_PROVIDER"];
+                context.learnable.audios.push("AUDIO_PROVIDER");
                 return true;
             }
         } else {
