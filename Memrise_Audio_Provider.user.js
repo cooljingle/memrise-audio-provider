@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.5
+// @version        0.1.6
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -336,7 +336,7 @@ $(document).ready(function () {
 
     $(document).ajaxSend(function (e, xhr, settings) {
         isNetworkBusy = true;
-        xhr.complete(function() {
+        xhr.always(function() {
             isNetworkBusy = false;
         });
     });
