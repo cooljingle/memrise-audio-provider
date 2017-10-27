@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.6
+// @version        0.1.7
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -32,7 +32,7 @@ $(document).ready(function () {
         speechSynthesisPlaying,
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
-        wordColumn = "item";
+        wordColumn;
 
     var canSpeechSynthesize = false,
         canGoogleTts = true,
@@ -75,12 +75,13 @@ $(document).ready(function () {
                             var newCourseId = getCourseId(this);
                             if (courseId !== newCourseId) {
                                 courseId = newCourseId;
+                                wordColumn = savedChoices[courseId] || _.find(["item", "definition"], c => this.learnable[c].kind === "text") || "none";
                                 editAudioOptions(this);
                             }
                             if (wordColumn !== "none") {
                                 var isInjected = injectAudioIfRequired(this);
                                 currentWord = this.learnable[wordColumn].value;
-                                if (isInjected && !canSpeechSynthesize && canGoogleTts) {
+                                if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                     preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
                                 }
                             }
@@ -125,15 +126,14 @@ $(document).ready(function () {
                 kind: "text",
                 label: "No audio"
             },
-            item: context.learnable.item,
-            definition: context.learnable.definition
+            definition: context.learnable.definition,
+            item: context.learnable.item
         }, function (v, k) {
             if (v.kind === "text") {
                 $('#audio-provider-options').append('<option value="' + k + '">' + v.label + '</option>');
             }
         });
-        wordColumn = savedChoices[courseId] || "item";
-        $('#audio-provider-options').val(savedChoices[courseId] || "item");
+        $('#audio-provider-options').val(wordColumn);
         $('#audio-provider-options').change(function () {
             wordColumn = $(this).val();
             savedChoices[courseId] = wordColumn;
@@ -204,6 +204,13 @@ $(document).ready(function () {
             if (!column.value || column.value.length === 0) {
                 column.value = ["AUDIO_PROVIDER"];
                 context.learnable.audios.push("AUDIO_PROVIDER");
+                if(context.template === "presentation") {
+                    var screen = MEMRISE.garden.screens[context.learnable_id].presentation;
+                    if(!screen.audio) {
+                        screen.columns.push(column);
+                        screen.audios = ["AUDIO_PROVIDER"];
+                    }
+                }
                 return true;
             }
         } else {
