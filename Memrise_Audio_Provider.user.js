@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.7
+// @version        0.1.8
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -214,7 +214,7 @@ $(document).ready(function () {
                 return true;
             }
         } else {
-            log("could not find a way to generate audio for language" + language);
+            log("could not find a way to generate audio for language " + language);
             $('#audio-provider-link').hide();
         }
     }
@@ -282,7 +282,7 @@ $(document).ready(function () {
                 var audioElement = makeAudioElement(source, word, url, function (e) {
                     canGoogleTts = false;
                 });
-                $(audioElement).on('loadeddata', function () {
+                $(audioElement).on('loadeddata, error', function () {
                     document.getElementsByName("referrer")[0].setAttribute("content", "origin");
                 });
                 return audioElement;
@@ -462,7 +462,6 @@ $(document).ready(function () {
         "Sindhi": "sd",
         "Sinhalese": "si",
         "Slovak": "sk",
-        "Slovenian": "sl",
         "Somali": "so",
         "Spanish (Mexico)": "es",
         "Spanish (Spain)": "es",
