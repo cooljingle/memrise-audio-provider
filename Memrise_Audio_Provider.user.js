@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.9
+// @version        0.1.10
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -26,7 +26,7 @@ $(document).ready(function () {
             "   <input id='audio-provider-voicerss' type='text' placeholder='enter Voice RSS key'>",
             "</div>"
         ].join("\n")),
-        localStorageIdentifier = "memrise-audio-provider-storage",
+        localStorageIdentifier = "memrise-audio-provider-storagev2",
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisPlaying,
@@ -75,12 +75,12 @@ $(document).ready(function () {
                             var newCourseId = getCourseId(this);
                             if (courseId !== newCourseId) {
                                 courseId = newCourseId;
-                                wordColumn = savedChoices[courseId] || _.find(["item", "definition"], c => this.learnable[c].kind === "text") || "none";
+                                wordColumn = savedChoices[courseId] || _.map(_.filter([this.learnable.item, this.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
                                 editAudioOptions(this);
                             }
-                            if (wordColumn !== "none") {
+                            if (wordColumn !== "No audio") {
                                 var isInjected = injectAudioIfRequired(this);
-                                currentWord = this.learnable[wordColumn].value;
+                                currentWord = _.find([this.learnable.definition, this.learnable.item], x => x.label === wordColumn).value;
                                 if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                     preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
                                 }
@@ -121,25 +121,15 @@ $(document).ready(function () {
 
     function editAudioOptions(context) {
         $('#audio-provider-options').empty();
-        _.each({
-            none: {
-                kind: "text",
-                label: "No audio"
-            },
-            definition: context.learnable.definition,
-            item: context.learnable.item
-        }, function (v, k) {
-            if (v.kind === "text") {
-                $('#audio-provider-options').append('<option value="' + k + '">' + v.label + '</option>');
-            }
-        });
+        var options = ["No audio"].concat([context.learnable.definition, context.learnable.item].filter(x => x.kind === "text").map(x => x.label));
+        _.each(options, o => $('#audio-provider-options').append('<option value="' + o + '">' + o + '</option>'));
         $('#audio-provider-options').val(wordColumn);
         $('#audio-provider-options').change(function () {
             wordColumn = $(this).val();
             savedChoices[courseId] = wordColumn;
             localStorage.setItem(localStorageIdentifier, JSON.stringify(savedChoices));
-            if (wordColumn !== "none") {
-                currentWord = context.learnable[wordColumn].value;
+            if (wordColumn !== "No audio") {
+                currentWord = _.find([context.learnable.definition, context.learnable.item], x => x.label === wordColumn).value;
             }
         });
     }
@@ -371,123 +361,54 @@ $(document).ready(function () {
     var googleTtsLanguageCodes = {
         "Afrikaans": "af",
         "Albanian": "sq",
-        "Amharic": "am",
         "Arabic": "ar",
         "Armenian": "hy",
-        "Azerbaijani": "az",
-        "Basque": "eu",
-        "Belarusian": "be",
         "Bengali": "bn",
-        "Bihari": "bh",
         "Bosnian": "bs",
-        "Breton": "br",
-        "Bulgarian": "bg",
-        "Cambodian": "km",
         "Catalan": "ca",
         "Chinese (Simplified)": "zh-CN",
         "Chinese (Traditional)": "zh-TW",
-        "Corsican": "co",
         "Croatian": "hr",
         "Czech": "cs",
         "Danish": "da",
         "Dutch": "nl",
         "English": "en",
         "Esperanto": "eo",
-        "Estonian": "et",
-        "Faroese": "fo",
-        "Filipino": "tl",
         "Finnish": "fi",
         "French": "fr",
-        "Frisian": "fy",
-        "Galician": "gl",
-        "Georgian": "ka",
         "German": "de",
         "Greek": "el",
-        "Guarani": "gn",
-        "Gujarati": "gu",
-        "Hausa": "ha",
-        "Hebrew": "iw",
         "Hindi": "hi",
         "Hungarian": "hu",
         "Icelandic": "is",
         "Indonesian": "id",
-        "Interlingua": "ia",
-        "Irish": "ga",
         "Italian": "it",
         "Japanese": "ja",
-        "Javanese": "jw",
-        "Kannada": "kn",
-        "Kazakh": "kk",
-        "Kinyarwanda": "rw",
-        "Kirundi": "rn",
+        "Khmer": "km",
         "Korean": "ko",
-        "Kurdish": "ku",
-        "Kyrgyz": "ky",
-        "Laothian": "lo",
         "Latin": "la",
         "Latvian": "lv",
-        "Lingala": "ln",
-        "Lithuanian": "lt",
         "Macedonian": "mk",
-        "Malagasy": "mg",
-        "Malay": "ms",
-        "Malayalam": "ml",
-        "Maltese": "mt",
-        "Maori": "mi",
-        "Marathi": "mr",
-        "Moldavian": "mo",
-        "Mongolian": "mn",
-        "Montenegrin": "sr-ME",
         "Nepali": "ne",
         "Norwegian": "no",
-        "Norwegian (Nynorsk)": "nn",
-        "Occitan": "oc",
-        "Oriya": "or",
-        "Oromo": "om",
-        "Pashto": "ps",
-        "Persian": "fa",
         "Polish": "pl",
         "Portuguese (Brazil)": "pt-BR",
         "Portuguese (Portugal)": "pt-PT",
-        "Punjabi": "pa",
-        "Quechua": "qu",
         "Romanian": "ro",
-        "Romansh": "rm",
         "Russian": "ru",
-        "Scots Gaelic": "gd",
         "Serbian": "sr",
-        "Serbo-Croatian": "sh",
-        "Sesotho": "st",
-        "Shona": "sn",
-        "Sindhi": "sd",
         "Sinhalese": "si",
         "Slovak": "sk",
-        "Somali": "so",
         "Spanish (Mexico)": "es",
         "Spanish (Spain)": "es",
-        "Sundanese": "su",
         "Swahili": "sw",
         "Swedish": "sv",
-        "Tajik": "tg",
         "Tamil": "ta",
-        "Tatar": "tt",
-        "Telugu": "te",
         "Thai": "th",
-        "Tigrinya": "ti",
-        "Tonga": "to",
         "Turkish": "tr",
-        "Turkmen": "tk",
-        "Twi": "tw",
-        "Uighur": "ug",
         "Ukrainian": "uk",
-        "Urdu": "ur",
-        "Uzbek": "uz",
         "Vietnamese": "vi",
-        "Welsh": "cy",
-        "Xhosa": "xh",
-        "Yiddish": "yi",
-        "Yoruba": "yo",
-        "Zulu": "zu"
+        "Welsh": "cy"
     };
 
     var voiceRssLanguageCodes = {
