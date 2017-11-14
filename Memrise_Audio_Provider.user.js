@@ -67,28 +67,28 @@ $(document).ready(function () {
                 canSpeechSynthesize = !!(speechSynthesisUtterance.lang && speechSynthesisUtterance.voice);
             }
 
-                MEMRISE.garden.session.make_box = (function () {
-                    var cached_function = MEMRISE.garden.session.make_box;
-                    return function () {
-                        var result = cached_function.apply(this, arguments);
-                        if (["end_of_session", "speed-count-down"].indexOf(result.template) < 0) {
-                            var newCourseId = getCourseId(result);
-                            if (courseId !== newCourseId) {
-                                courseId = newCourseId;
-                                wordColumn = savedChoices[courseId] || _.map(_.filter([result.learnable.item, result.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
-                                editAudioOptions(result);
-                            }
-                            if (wordColumn !== "No audio") {
-                                var isInjected = injectAudioIfRequired(result);
-                                currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
-                                if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
-                                    preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
-                                }
+            MEMRISE.garden.session.make_box = (function () {
+                var cached_function = MEMRISE.garden.session.make_box;
+                return function () {
+                    var result = cached_function.apply(this, arguments);
+                    if (["end_of_session", "speed-count-down"].indexOf(result.template) < 0) {
+                        var newCourseId = getCourseId(result);
+                        if (courseId !== newCourseId) {
+                            courseId = newCourseId;
+                            wordColumn = savedChoices[courseId] || _.map(_.filter([result.learnable.item, result.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
+                            editAudioOptions(result);
+                        }
+                        if (wordColumn !== "No audio") {
+                            var isInjected = injectAudioIfRequired(result);
+                            currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
+                            if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
+                                preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
                             }
                         }
-                        return result;
-                    };
-                }());
+                    }
+                    return result;
+                };
+            }());
 
             MEMRISE.renderer.fixMediaUrl = (function () {
                 var cached_function = MEMRISE.renderer.fixMediaUrl;
