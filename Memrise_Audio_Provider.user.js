@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.10
+// @version        0.1.11
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -67,30 +67,28 @@ $(document).ready(function () {
                 canSpeechSynthesize = !!(speechSynthesisUtterance.lang && speechSynthesisUtterance.voice);
             }
 
-            _.each(MEMRISE.garden.box_types, function (box_type) {
-                box_type.prototype.activate = (function () {
-                    var cached_function = box_type.prototype.activate;
+                MEMRISE.garden.session.make_box = (function () {
+                    var cached_function = MEMRISE.garden.session.make_box;
                     return function () {
-                        if (["end_of_session", "speed-count-down"].indexOf(this.template) < 0) {
-                            var newCourseId = getCourseId(this);
+                        var result = cached_function.apply(this, arguments);
+                        if (["end_of_session", "speed-count-down"].indexOf(result.template) < 0) {
+                            var newCourseId = getCourseId(result);
                             if (courseId !== newCourseId) {
                                 courseId = newCourseId;
-                                wordColumn = savedChoices[courseId] || _.map(_.filter([this.learnable.item, this.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
-                                editAudioOptions(this);
+                                wordColumn = savedChoices[courseId] || _.map(_.filter([result.learnable.item, result.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
+                                editAudioOptions(result);
                             }
                             if (wordColumn !== "No audio") {
-                                var isInjected = injectAudioIfRequired(this);
-                                currentWord = _.find([this.learnable.definition, this.learnable.item], x => x.label === wordColumn).value;
+                                var isInjected = injectAudioIfRequired(result);
+                                currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
                                 if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                     preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
                                 }
                             }
                         }
-                        var result = cached_function.apply(this, arguments);
                         return result;
                     };
                 }());
-            });
 
             MEMRISE.renderer.fixMediaUrl = (function () {
                 var cached_function = MEMRISE.renderer.fixMediaUrl;
