@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.11
+// @version        0.1.12
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -266,13 +266,13 @@ $(document).ready(function () {
             } else {
                 log("generating google tts link for word: " + word);
                 var url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=tw-ob&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
-                document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
                 var audioElement = makeAudioElement(source, word, url, function (e) {
                     canGoogleTts = false;
                 });
-                $(audioElement).on('loadeddata', function () {
+                $(audioElement).on('loadstart', function () {
                     document.getElementsByName("referrer")[0].setAttribute("content", "origin");
                 });
+                document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
                 return audioElement;
             }
         }
