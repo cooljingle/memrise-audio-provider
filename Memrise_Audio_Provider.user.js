@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.13
+// @version        0.1.14
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -271,11 +271,10 @@ $(document).ready(function () {
                 });
                 if (navigator.userAgent.search("Firefox") > -1) {
                     $(audioElement).on('loadstart', () => setReferrerNoReferrer());
-                    $(audioElement).on('loadedmetadata', () => setReferrerOrigin());
                 } else {
                     setReferrerNoReferrer();
-                    $(audioElement).on('loadstart', () => setReferrerOrigin());
                 }
+                $(audioElement).on('loadedmetadata', () => setReferrerOrigin());
                 return audioElement;
             }
         }
