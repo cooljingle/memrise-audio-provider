@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.14
+// @version        0.1.15
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -14,7 +14,6 @@ $(document).ready(function () {
     var cachedAudioElements = [],
         courseId,
         currentWord,
-        isNetworkBusy,
         language,
         linkHtml = $([
             "<a id='audio-provider-link'>Audio Provider</a>",
@@ -28,6 +27,8 @@ $(document).ready(function () {
         ].join("\n")),
         localStorageIdentifier = "memrise-audio-provider-storagev2",
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
+        referrerState,
+        requestCount = 0,
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisPlaying,
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
@@ -82,7 +83,7 @@ $(document).ready(function () {
                             var isInjected = injectAudioIfRequired(result);
                             currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
                             if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
-                                preloadGoogleTts(currentWord); //required as we change referrer header while loading, which we don't want to conflict with memrise calls
+                                getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
                             }
                         }
                     }
@@ -149,12 +150,7 @@ $(document).ready(function () {
     }
 
     function removeCachedElement(source, word) {
-        var cachedElem = cachedAudioElements.find(function (obj) {
-            return obj.source === source && obj.word === word;
-        });
-        if (cachedElem) {
-            cachedElem.source = cachedElem.element = undefined;
-        }
+        _.remove(cachedAudioElements, e => e.source === source && e.word === word);
     }
 
     function setCachedElement(source, word, element) {
@@ -246,59 +242,57 @@ $(document).ready(function () {
     }
 
     function playGoogleTtsAudio(word) {
-        var audioElement = getGoogleTtsElement(word);
-        if (audioElement) {
-            audioElement.play();
-        } else {
-            canGoogleTts = false;
-            playGeneratedAudio(word);
-        }
+        getGoogleTtsElement(word, audioElement => audioElement.play());
     }
 
-    function getGoogleTtsElement(word) {
+    function getGoogleTtsElement(word, callback) {
         var languageCode = googleTtsLanguageCodes[language],
             source = "google tts",
             cachedElement = getCachedElement(source, word);
 
         if (languageCode) {
             if (cachedElement) {
-                return cachedElement;
+                if(callback)
+                    callback(cachedElement);
             } else {
-                log("generating google tts link for word: " + word);
-                var url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=tw-ob&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
-                var audioElement = makeAudioElement(source, word, url, function (e) {
-                    canGoogleTts = false;
-                });
-                if (navigator.userAgent.search("Firefox") > -1) {
-                    $(audioElement).on('loadstart', () => setReferrerNoReferrer());
+                if (isNetworkBusy()) {
+                    log("network busy - delaying google tts load");
+                    setTimeout(function(){
+                        getGoogleTtsElement(word, callback);
+                    }, 300);
                 } else {
-                    setReferrerNoReferrer();
+                    log("generating google tts link for word: " + word);
+                    var url = "https://translate.google.com/translate_tts?ie=UTF-8&tl=" + languageCode + "&client=tw-ob&q=" + encodeURIComponent(word) + "&tk=" + Math.floor(Math.random() * 1000000); //helps stop google from complaining about too many requests;
+                    var audioElement = makeAudioElement(source, word, url, function (e) {
+                        if(referrerState === "origin") {
+                            console.log("referrer header was set prematurely");
+                            removeCachedElement(source, word);
+                        } else {
+                            canGoogleTts = false;
+                            setReferrerOrigin();
+                        }
+                    });
+                    if (navigator.userAgent.search("Firefox") > -1) {
+                        $(audioElement).on('loadstart', () => setReferrerNoReferrer());
+                    } else {
+                        setReferrerNoReferrer();
+                    }
+                    $(audioElement).on('loadedmetadata', () => setReferrerOrigin());
+                    if(callback)
+                        callback(audioElement);
                 }
-                $(audioElement).on('loadedmetadata', () => setReferrerOrigin());
-                return audioElement;
             }
         }
     }
 
     function setReferrerOrigin() {
-        log("setting referrer to origin");
         document.getElementsByName("referrer")[0].setAttribute("content", "origin");
+        referrerState = "origin";
     }
 
     function setReferrerNoReferrer() {
-        log("setting referrer to no-referrer");
         document.getElementsByName("referrer")[0].setAttribute("content", "no-referrer");
-    }
-
-    function preloadGoogleTts(word) {
-        if (isNetworkBusy) {
-            log("network busy - delaying google tts preload");
-            setTimeout(function(){
-                preloadGoogleTts(word);
-            }, 300);
-        } else {
-            getGoogleTtsElement(word);
-        }
+        referrerState = "no-referrer";
     }
 
     function playVoiceRssAudio(word) {
@@ -334,6 +328,7 @@ $(document).ready(function () {
         audioElement.setAttribute('src', url);
         $(audioElement).on('error', function(e) {
             log(source + " failed");
+            console.log(e);
             onError(e);
             playGeneratedAudio(word);
         });
@@ -341,10 +336,17 @@ $(document).ready(function () {
         return audioElement;
     }
 
+    function isNetworkBusy() {
+        return requestCount > 0;
+    }
+
     $(document).ajaxSend(function (e, xhr, settings) {
-        isNetworkBusy = true;
+        requestCount++;
+        if(referrerState === "no-referrer") {
+            setReferrerOrigin();
+        }
         xhr.always(function() {
-            isNetworkBusy = false;
+            requestCount--;
         });
     });
 
