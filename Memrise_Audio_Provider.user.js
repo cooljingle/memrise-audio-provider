@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.16
+// @version        0.1.17
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -80,7 +80,12 @@ $(document).ready(function () {
                             editAudioOptions(result);
                         }
                         if (wordColumn !== "No audio") {
-                            var isInjected = injectAudioIfRequired(result);
+                            var isInjected = false;
+                            if (!(canSpeechSynthesize || canGoogleTts || canVoiceRss)){
+                                log("could not find a way to generate audio for language " + language);
+                                $('#audio-provider-link').hide();
+                            } else
+                                isInjected = MEMRISE.garden.screens[result.learnable_id][result.template].audio.value.normal === "AUDIO_PROVIDER";
                             currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
                             if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                 getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
@@ -113,6 +118,27 @@ $(document).ready(function () {
                     }
                 };
             }());
+
+            _.each(MEMRISE.garden.learnables, function(v, k) {
+                var learnableScreens = MEMRISE.garden.screens[k];
+                _.each(Object.keys(learnableScreens), k => {
+                    var s = learnableScreens[k];
+                    var hasAudio = s.audio && s.audio.value && s.audio.value.length;
+                    if(!hasAudio){
+                        s.audio = {
+                            alternatives: [],
+                            direction: "target",
+                            kind: "audio",
+                            label: "Audio",
+                            style: [],
+                            value: [{
+                                normal: "AUDIO_PROVIDER",
+                                slow: "AUDIO_PROVIDER"
+                            }]
+                        };
+                    }
+                });
+            });
 
             return result;
         };
@@ -153,21 +179,7 @@ $(document).ready(function () {
     }
 
     function getCourseId(context) {
-        return context.course_id || MEMRISE.garden.session_params.course_id || MEMRISE.garden.session_data.things_to_courses[context.thinguser.thing_id];
-    }
-
-    function injectAudioIfRequired(context) {
-        if (canSpeechSynthesize || canGoogleTts || canVoiceRss) {
-            $('#audio-provider-link').show();
-            var hasAudio = !!context.learnable.audios.length;
-            if(!hasAudio) {
-                context.learnable.audios = MEMRISE.garden.screens[context.learnable_id].presentation.audio = ["AUDIO_PROVIDER"];
-                return true;
-            }
-        } else {
-            log("could not find a way to generate audio for language " + language);
-            $('#audio-provider-link').hide();
-        }
+        return context.course_id || MEMRISE.garden.session_params.course_id || MEMRISE.garden.session_data.learnables_to_courses[context.learnable.learnable_id];
     }
 
     function log(message) {
