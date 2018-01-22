@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.17
+// @version        0.1.18
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -85,7 +85,7 @@ $(document).ready(function () {
                                 log("could not find a way to generate audio for language " + language);
                                 $('#audio-provider-link').hide();
                             } else
-                                isInjected = MEMRISE.garden.screens[result.learnable_id][result.template].audio.value.normal === "AUDIO_PROVIDER";
+                                isInjected = (result.presentationData || result.testData).audio.value.normal === "AUDIO_PROVIDER";
                             currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
                             if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                 getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
