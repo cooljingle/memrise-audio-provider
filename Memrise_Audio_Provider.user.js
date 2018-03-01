@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.18
+// @version        0.1.19
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -15,24 +15,26 @@ $(document).ready(function () {
         courseId,
         currentWord,
         language,
-        linkHtml = $([
-            "<a id='audio-provider-link'>Audio Provider</a>",
-            "<div id='audio-provider-box' style='display:none'>",
-            "   <em style='font-size:85%'>audio for this course:",
-            "   </em><select id='audio-provider-options'></select>",
-            "   <hr/>",
-            "   <em style='font-size:85%'>Voice RSS key:",
-            "   <input id='audio-provider-voicerss' type='text' placeholder='enter Voice RSS key'>",
-            "</div>"
-        ].join("\n")),
+        linkHtml = `<a id='audio-provider-link'>Audio Provider</a>
+            <div id='audio-provider-box' style='display:none'>
+               <em style='font-size:85%'>audio for this course:
+               </em><select id='audio-provider-options'></select>
+               <hr/>
+               <em style='font-size:85%'>Voice RSS key:
+               <input id='audio-provider-voicerss' type='text' placeholder='enter Voice RSS key'>
+               <em style='font-size:85%'>Override all audio:
+               <input id='audio-provider-override' type="checkbox"><br>
+            </div>`,
         localStorageIdentifier = "memrise-audio-provider-storagev2",
         localStorageVoiceRssIdentifier = "memrise-audio-provider-voicerss",
+        localStorageOverrideIdentifier = "memrise-audio-provider-override-all",
         referrerState,
         requestCount = 0,
         savedChoices = JSON.parse(localStorage.getItem(localStorageIdentifier)) || {},
         speechSynthesisPlaying,
         speechSynthesisUtterance = window.speechSynthesis && new window.SpeechSynthesisUtterance(),
         voiceRssKey = localStorage.getItem(localStorageVoiceRssIdentifier) || "",
+        overrideAllAudio = localStorage.getItem(localStorageOverrideIdentifier) === "true",
         wordColumn;
 
     var canSpeechSynthesize = false,
@@ -46,6 +48,12 @@ $(document).ready(function () {
     $('#audio-provider-voicerss').val(voiceRssKey);
     $('#audio-provider-voicerss').change(function () {
         localStorage.setItem(localStorageVoiceRssIdentifier, $(this).val());
+    });
+    $('#audio-provider-override').prop('checked', overrideAllAudio);
+    $('#audio-provider-override').change(function () {
+        var checked = $(this).is(':checked');
+        overrideAllAudio = checked;
+        localStorage.setItem(localStorageOverrideIdentifier, checked);
     });
 
     //required to get google tts working
@@ -85,7 +93,7 @@ $(document).ready(function () {
                                 log("could not find a way to generate audio for language " + language);
                                 $('#audio-provider-link').hide();
                             } else
-                                isInjected = (result.presentationData || result.testData).audio.value.normal === "AUDIO_PROVIDER";
+                                isInjected = overrideAllAudio || (result.presentationData || result.testData).audio.value.normal === "AUDIO_PROVIDER";
                             currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
                             if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
                                 getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
@@ -99,7 +107,7 @@ $(document).ready(function () {
             MEMRISE.renderer.fixMediaUrl = (function () {
                 var cached_function = MEMRISE.renderer.fixMediaUrl;
                 return function () {
-                    if (arguments[0] === "AUDIO_PROVIDER" || (_.isArray(arguments[0]) && arguments[0][0] === "AUDIO_PROVIDER")) {
+                    if (overrideAllAudio || arguments[0] === "AUDIO_PROVIDER" || (_.isArray(arguments[0]) && arguments[0][0] === "AUDIO_PROVIDER")) {
                         return "";
                     } else {
                         return cached_function.apply(this, arguments);
