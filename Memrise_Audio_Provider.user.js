@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.20
+// @version        0.1.21
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -210,7 +210,7 @@ $(document).ready(function () {
     }
 
     function playSpeechSynthesisAudio(word) {
-        if(!speechSynthesisPlaying){
+        if(!(speechSynthesisUtterance.text === word && speechSynthesisPlaying)){
             log("generating speechSynthesis audio for word: " + word);
             speechSynthesisUtterance.text = word;
             window.speechSynthesis.speak(speechSynthesisUtterance);
