@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.19
+// @version        0.1.20
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -127,27 +127,30 @@ $(document).ready(function () {
                 };
             }());
 
-            _.each(MEMRISE.garden.learnables, function(v, k) {
-                var learnableScreens = MEMRISE.garden.screens[k];
-                _.each(Object.keys(learnableScreens), k => {
-                    var s = learnableScreens[k];
-                    var hasAudio = s.audio && s.audio.value && s.audio.value.length;
-                    if(!hasAudio){
-                        s.audio = {
-                            alternatives: [],
-                            direction: "target",
-                            kind: "audio",
-                            label: "Audio",
-                            style: [],
-                            value: [{
-                                normal: "AUDIO_PROVIDER",
-                                slow: "AUDIO_PROVIDER"
-                            }]
-                        };
-                    }
+            MEMRISE.garden.populateScreenAudios = function() {
+                _.each(MEMRISE.garden.learnables, function(v, k) {
+                    var learnableScreens = MEMRISE.garden.screens[k];
+                    _.each(Object.keys(learnableScreens), k => {
+                        var s = learnableScreens[k];
+                        var hasAudio = s.audio && s.audio.value && s.audio.value.length;
+                        if(!hasAudio){
+                            s.audio = {
+                                alternatives: [],
+                                direction: "target",
+                                kind: "audio",
+                                label: "Audio",
+                                style: [],
+                                value: [{
+                                    normal: "AUDIO_PROVIDER",
+                                    slow: "AUDIO_PROVIDER"
+                                }]
+                            };
+                        }
+                    });
                 });
-            });
+            };
 
+            MEMRISE.garden.populateScreenAudios();
             return result;
         };
     }());
