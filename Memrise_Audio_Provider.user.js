@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.22
+// @version        0.1.23
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -65,7 +65,6 @@ $(document).ready(function () {
     MEMRISE.garden.session_start = (function () {
         var cached_function = MEMRISE.garden.session_start;
         return function () {
-            var result = cached_function.apply(this, arguments);
             language = MEMRISE.garden.session.category.name;
             if (speechSynthesisUtterance) {
                 var langCode = speechSynthesisLanguageCodes[language];
@@ -128,8 +127,8 @@ $(document).ready(function () {
             }());
 
             MEMRISE.garden.populateScreenAudios = function() {
-                _.each(MEMRISE.garden.learnables, function(v, k) {
-                    var learnableScreens = MEMRISE.garden.screens[k];
+                _.each(MEMRISE.garden.learnables || _.indexBy(MEMRISE.garden.session_data.learnables, 'learnable_id'), function(v, k) {
+                    var learnableScreens = (MEMRISE.garden.screens || MEMRISE.garden.session_data.screens)[k];
                     _.each(Object.keys(learnableScreens), k => {
                         var s = learnableScreens[k];
                         var hasAudio = s.audio && s.audio.value && s.audio.value.length;
@@ -151,7 +150,7 @@ $(document).ready(function () {
             };
 
             MEMRISE.garden.populateScreenAudios();
-            return result;
+            return cached_function.apply(this, arguments);
         };
     }());
 
