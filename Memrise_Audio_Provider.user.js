@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.23
+// @version        0.1.24
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -349,6 +349,7 @@ $(document).ready(function () {
         "Indonesian": "id-ID",
         "Italian": "it-IT",
         "Japanese": "ja-JP",
+        "Kanji": "ja-JP",
         "Korean": "ko-KR",
         "Dutch": "nl-NL",
         "Polish": "pl-PL",
@@ -385,6 +386,7 @@ $(document).ready(function () {
         "Indonesian": "id",
         "Italian": "it",
         "Japanese": "ja",
+        "Kanji": "ja",
         "Khmer": "km",
         "Korean": "ko",
         "Latin": "la",
@@ -424,6 +426,7 @@ $(document).ready(function () {
         "German": "de-de",
         "Italian": "it-it",
         "Japanese": "ja-jp",
+        "Kanji": "ja-jp",
         "Korean": "ko-kr",
         "Norwegian": "nb-no",
         "Polish": "pl-pl",
