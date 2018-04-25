@@ -4,7 +4,7 @@
 // @description    Provides audio for any items you are learning which have none.
 // @match          https://www.memrise.com/course/*/garden/*
 // @match          https://www.memrise.com/garden/review/*
-// @version        0.1.24
+// @version        0.1.25
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
@@ -62,97 +62,93 @@ $(document).ready(function () {
     meta.content = "origin";
     document.getElementsByTagName('head')[0].appendChild(meta);
 
-    MEMRISE.garden.session_start = (function () {
-        var cached_function = MEMRISE.garden.session_start;
-        return function () {
-            language = MEMRISE.garden.session.category.name;
-            if (speechSynthesisUtterance) {
-                var langCode = speechSynthesisLanguageCodes[language];
-                speechSynthesisUtterance.lang = langCode || "";
-                speechSynthesisUtterance.voice = speechSynthesis.getVoices().filter(function (voice) {
-                    return voice.lang === langCode;
-                })[0];
-                canSpeechSynthesize = !!(speechSynthesisUtterance.lang && speechSynthesisUtterance.voice);
-            }
+    MEMRISE.garden._events.start.push(() => {
+        language = MEMRISE.garden.session.category.name;
+        if (speechSynthesisUtterance) {
+            var langCode = speechSynthesisLanguageCodes[language];
+            speechSynthesisUtterance.lang = langCode || "";
+            speechSynthesisUtterance.voice = speechSynthesis.getVoices().filter(function (voice) {
+                return voice.lang === langCode;
+            })[0];
+            canSpeechSynthesize = !!(speechSynthesisUtterance.lang && speechSynthesisUtterance.voice);
+        }
 
-            MEMRISE.garden.session.make_box = (function () {
-                var cached_function = MEMRISE.garden.session.make_box;
-                return function () {
-                    var result = cached_function.apply(this, arguments);
-                    if (["end_of_session", "speed-count-down"].indexOf(result.template) < 0) {
-                        var newCourseId = getCourseId(result);
-                        if (courseId !== newCourseId) {
-                            courseId = newCourseId;
-                            wordColumn = savedChoices[courseId] || _.map(_.filter([result.learnable.item, result.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
-                            editAudioOptions(result);
-                        }
-                        if (wordColumn !== "No audio") {
-                            var isInjected = false;
-                            if (!(canSpeechSynthesize || canGoogleTts || canVoiceRss)){
-                                log("could not find a way to generate audio for language " + language);
-                                $('#audio-provider-link').hide();
-                            } else
-                                isInjected = overrideAllAudio || (result.presentationData || result.testData).audio.value.normal === "AUDIO_PROVIDER";
-                            currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
-                            if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
-                                getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
-                            }
+        MEMRISE.garden.session.make_box = (function () {
+            var cached_function = MEMRISE.garden.session.make_box;
+            return function () {
+                var result = cached_function.apply(this, arguments);
+                if (["end_of_session", "speed-count-down"].indexOf(result.template) < 0) {
+                    var newCourseId = getCourseId(result);
+                    if (courseId !== newCourseId) {
+                        courseId = newCourseId;
+                        wordColumn = savedChoices[courseId] || _.map(_.filter([result.learnable.item, result.learnable.definition], x => x.kind === "text"), x => x.label)[0] || "No audio";
+                        editAudioOptions(result);
+                    }
+                    if (wordColumn !== "No audio") {
+                        var isInjected = false;
+                        if (!(canSpeechSynthesize || canGoogleTts || canVoiceRss)){
+                            log("could not find a way to generate audio for language " + language);
+                            $('#audio-provider-link').hide();
+                        } else
+                            isInjected = overrideAllAudio || (result.presentationData || result.testData).audio.value.normal === "AUDIO_PROVIDER";
+                        currentWord = _.find([result.learnable.definition, result.learnable.item], x => x.label === wordColumn).value;
+                        if (isInjected && currentWord && !canSpeechSynthesize && canGoogleTts) {
+                            getGoogleTtsElement(currentWord); //required to 'preload' as we change referrer header while loading, which we don't want to conflict with memrise calls
                         }
                     }
-                    return result;
-                };
-            }());
-
-            MEMRISE.renderer.fixMediaUrl = (function () {
-                var cached_function = MEMRISE.renderer.fixMediaUrl;
-                return function () {
-                    if (overrideAllAudio || arguments[0] === "AUDIO_PROVIDER" || (_.isArray(arguments[0]) && arguments[0][0] === "AUDIO_PROVIDER")) {
-                        return "";
-                    } else {
-                        return cached_function.apply(this, arguments);
-                    }
-                };
-            }());
-
-            MEMRISE.audioPlayer.play = (function () {
-                var cached_function = MEMRISE.audioPlayer.play;
-                return function () {
-                    var shouldGenerateAudio = (arguments[0].url === "");
-                    if (shouldGenerateAudio) {
-                        playGeneratedAudio(currentWord);
-                    } else {
-                        cached_function.apply(this, arguments);
-                    }
-                };
-            }());
-
-            MEMRISE.garden.populateScreenAudios = function() {
-                _.each(MEMRISE.garden.learnables || _.indexBy(MEMRISE.garden.session_data.learnables, 'learnable_id'), function(v, k) {
-                    var learnableScreens = (MEMRISE.garden.screens || MEMRISE.garden.session_data.screens)[k];
-                    _.each(Object.keys(learnableScreens), k => {
-                        var s = learnableScreens[k];
-                        var hasAudio = s.audio && s.audio.value && s.audio.value.length;
-                        if(!hasAudio){
-                            s.audio = {
-                                alternatives: [],
-                                direction: "target",
-                                kind: "audio",
-                                label: "Audio",
-                                style: [],
-                                value: [{
-                                    normal: "AUDIO_PROVIDER",
-                                    slow: "AUDIO_PROVIDER"
-                                }]
-                            };
-                        }
-                    });
-                });
+                }
+                return result;
             };
+        }());
 
-            MEMRISE.garden.populateScreenAudios();
-            return cached_function.apply(this, arguments);
+        MEMRISE.renderer.fixMediaUrl = (function () {
+            var cached_function = MEMRISE.renderer.fixMediaUrl;
+            return function () {
+                if (overrideAllAudio || arguments[0] === "AUDIO_PROVIDER" || (_.isArray(arguments[0]) && arguments[0][0] === "AUDIO_PROVIDER")) {
+                    return "";
+                } else {
+                    return cached_function.apply(this, arguments);
+                }
+            };
+        }());
+
+        MEMRISE.audioPlayer.play = (function () {
+            var cached_function = MEMRISE.audioPlayer.play;
+            return function () {
+                var shouldGenerateAudio = (arguments[0].url === "");
+                if (shouldGenerateAudio) {
+                    playGeneratedAudio(currentWord);
+                } else {
+                    cached_function.apply(this, arguments);
+                }
+            };
+        }());
+
+        MEMRISE.garden.populateScreenAudios = function() {
+            _.each(MEMRISE.garden.learnables || _.indexBy(MEMRISE.garden.session_data.learnables, 'learnable_id'), function(v, k) {
+                var learnableScreens = (MEMRISE.garden.screens || MEMRISE.garden.session_data.screens)[k];
+                _.each(Object.keys(learnableScreens), k => {
+                    var s = learnableScreens[k];
+                    var hasAudio = s.audio && s.audio.value && s.audio.value.length;
+                    if(!hasAudio){
+                        s.audio = {
+                            alternatives: [],
+                            direction: "target",
+                            kind: "audio",
+                            label: "Audio",
+                            style: [],
+                            value: [{
+                                normal: "AUDIO_PROVIDER",
+                                slow: "AUDIO_PROVIDER"
+                            }]
+                        };
+                    }
+                });
+            });
         };
-    }());
+
+        MEMRISE.garden.populateScreenAudios();
+    });
 
     function editAudioOptions(context) {
         $('#audio-provider-options').empty();
