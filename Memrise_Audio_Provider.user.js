@@ -2,9 +2,9 @@
 // @name           Memrise Audio Provider
 // @namespace      https://github.com/cooljingle
 // @description    Provides audio for any items you are learning which have none.
-// @match          https://www.memrise.com/course/*/garden/*
-// @match          https://www.memrise.com/garden/review/*
-// @version        0.1.26
+// @match          https://app.memrise.com/course/*/garden/*
+// @match          https://app.memrise.com/garden/review/*
+// @version        0.1.27
 // @updateURL      https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @downloadURL    https://github.com/cooljingle/memrise-audio-provider/raw/master/Memrise_Audio_Provider.user.js
 // @grant          none
